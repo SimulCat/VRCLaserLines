@@ -5,6 +5,9 @@ using VolumetricLines;
 using VRC.SDKBase;
 using VRC.Udon;
 
+[RequireComponent(typeof(MeshFilter))]
+[RequireComponent(typeof(MeshRenderer))]
+
 public class UdonVolumetricLine : UdonSharpBehaviour
 {
     // Used to compute the average value of all the Vector3's components:
@@ -32,19 +35,23 @@ public class UdonVolumetricLine : UdonSharpBehaviour
     /// <summary>
     /// The width of the line
     /// </summary>
-    [SerializeField]
+    [SerializeField,FieldChangeCallback(nameof(LineWidth))]
     private float m_lineWidth;
 
     /// <summary>
     /// Light saber factor
     /// </summary>
     [SerializeField]
-    [Range(0.0f, 1.0f)]
+    [Range(0.0f, 1.0f), FieldChangeCallback(nameof(LightSaberFactor))]
     private float m_lightSaberFactor;
+
+    [SerializeField]
+    private Material templateMaterial;
 
     /// <summary>
     /// This GameObject's specific material
     /// </summary>
+    [SerializeField]
     private Material material;
 
     /// <summary>
@@ -206,7 +213,6 @@ public class UdonVolumetricLine : UdonSharpBehaviour
         if (null != mf)
         {
             var mesh = mf.sharedMesh;
-            Debug.Assert(null != mesh);
             if (null != mesh)
             {
                 mesh.bounds = CalculateBounds();
@@ -252,58 +258,35 @@ public class UdonVolumetricLine : UdonSharpBehaviour
 
     #region event functions
 
-    private bool checkComponents()
+    private bool initUVs(Mesh mesh)
     {
-        if (iHaveComponents)
-            return true;
+        Vector2[] uvs = new Vector2[8];
+        uvs[0] = new Vector2(1.0f, 1.0f);
+        uvs[1] = new Vector2(1.0f, 0.0f);
+        uvs[2] = new Vector2(0.5f, 1.0f);
+        uvs[3] = new Vector2(0.5f, 0.0f);
+        uvs[4] = new Vector2(0.5f, 0.0f);
+        uvs[5] = new Vector2(0.5f, 1.0f);
+        uvs[6] = new Vector2(0.0f, 0.0f);
+        uvs[7] = new Vector2(0.0f, 1.0f);
+        mesh.uv = uvs;
 
-        if (mf == null)
-            mf = GetComponent<MeshFilter>();
+        Vector2[] uv2 = new Vector2[8];
+        uv2[0] = new Vector2(1.0f, 1.0f);
+        uv2[1] = new Vector2(1.0f, -1.0f);
+        uv2[2] = new Vector2(0.0f, 1.0f);
+        uv2[3] = new Vector2(0.0f, -1.0f);
+        uv2[4] = new Vector2(0.0f, 1.0f);
+        uv2[5] = new Vector2(0.0f, -1.0f);
+        uv2[6] = new Vector2(1.0f, 1.0f);
+        uv2[7] = new Vector2(1.0f, -1.0f);
 
-        if (material == null)
-        {
-            MeshRenderer mr = GetComponent<MeshRenderer>();
-            if (mr != null)
-                material = mr.material;
-        }
-        if (mf == null || material == null)
-        {
-            Debug.Log(gameObject.name + " CheckComponents no mf or material");
-            return false;
-        }
-        mesh = mf.mesh;
-        if (mesh == null)
-        {
-            Debug.Log(gameObject.name + " CheckComponents no mesh");
-            return false;
-        }
-        SetStartAndEndPoints(m_startPos, m_endPos);
-        Vector2[] v2x8 = new Vector2[8];
-        v2x8[0] = new Vector2(1.0f, 1.0f);
-        v2x8[1] = new Vector2(1.0f, 0.0f);
-        v2x8[2] = new Vector2(0.5f, 1.0f);
-        v2x8[3] = new Vector2(0.5f, 0.0f);
-        v2x8[4] = new Vector2(0.5f, 0.0f);
-        v2x8[5] = new Vector2(0.5f, 1.0f);
-        v2x8[6] = new Vector2(0.0f, 0.0f);
-        v2x8[7] = new Vector2(0.0f, 1.0f);
-
-        mesh.uv = v2x8;
-        v2x8[0] = new Vector2(1.0f, 1.0f);
-        v2x8[1] = new Vector2(1.0f, -1.0f);
-        v2x8[2] = new Vector2(0.0f, 1.0f);
-        v2x8[3] = new Vector2(0.0f, -1.0f);
-        v2x8[4] = new Vector2(0.0f, 1.0f);
-        v2x8[5] = new Vector2(0.0f, -1.0f);
-        v2x8[6] = new Vector2(1.0f, 1.0f);
-        v2x8[7] = new Vector2(1.0f, -1.0f);
-
-        mesh.uv2 = v2x8;
+        mesh.uv2 = uv2;
         int[] indices = new int[18];
         // 2, 1, 0,
         indices[0] = 2; indices[1] = 1; indices[2] = 0;
         // 3, 1, 2,
-        indices[3] = 3; indices[4] = 1; indices[2] = 2;
+        indices[3] = 3; indices[4] = 1; indices[5] = 2;
         // 4, 3, 2,
         indices[6] = 4; indices[7] = 3; indices[8] = 2;
         // 5, 4, 2,
@@ -313,18 +296,24 @@ public class UdonVolumetricLine : UdonSharpBehaviour
         // 6, 5, 7
         indices[15] = 6; indices[16] = 5; indices[17] = 7;
         mesh.SetIndices(indices, MeshTopology.Triangles, 0);
-        SetAllMaterialProperties();
         return true;
     }
 
 
     void Start()
     {
-        iHaveComponents = checkComponents();
-        // TODO: Need to set vertices before assigning new Mesh to the MeshFilter's mesh property => Why?
+        mf = GetComponent<MeshFilter>();
+        mesh = new Mesh();
+        mf.mesh = mesh;
+        MeshRenderer mr = GetComponent<MeshRenderer>();
+        mr.material = templateMaterial;
+        material = mr.material;
+        SetStartAndEndPoints(m_startPos, m_endPos);
+        initUVs(mesh);
+        SetAllMaterialProperties();
     }
 
-    /*
+    /* need to port this to Udon?
     void OnDestroy()
     {
         if (null != mf)
@@ -341,7 +330,9 @@ public class UdonVolumetricLine : UdonSharpBehaviour
         }
         DestroyMaterial();
     }
-    */
+   */
+
+    bool propertyCheck = false;
     void Update()
     {
         if (transform.hasChanged)
@@ -349,24 +340,20 @@ public class UdonVolumetricLine : UdonSharpBehaviour
             UpdateLineScale();
             UpdateBounds();
         }
+        if (!propertyCheck)
+            return;
+        SetAllMaterialProperties();
+        UpdateBounds();
     }
 
 #if UNITY_EDITOR
-//    void OnValidate()
-//    {
- //       checkComponents();
-        // This function is called when the script is loaded or a value is changed in the inspector (Called in the editor only).
-        //  => make sure, everything stays up-to-date
-//if (string.IsNullOrEmpty(gameObject.scene.name) || string.IsNullOrEmpty(gameObject.scene.path))
- //       {
-  //          return; // ...but not if a Prefab is selected! (Only if we're using it within a scene.)
-  //      }
-  //      CreateMaterial();
-  //      SetAllMaterialProperties();
-   //     UpdateBounds();
-    //}
-    
-        void OnDrawGizmos()
+
+    private void OnValidate()
+    {
+        propertyCheck = true;
+    }
+
+    void OnDrawGizmos()
         {
             Gizmos.color = Color.green;
             Gizmos.DrawLine(gameObject.transform.TransformPoint(m_startPos), gameObject.transform.TransformPoint(m_endPos));

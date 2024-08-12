@@ -1,7 +1,7 @@
 /// Render a single volumetric line using an additive shader which does not support changing the color
 /// 
 /// Based on the Volumetric lines algorithm by Sebastien Hillaire
-/// https://web.archive.org/web/20111202022753/http://sebastien.hillaire.free.fr/index.php?option=com_content&view=article&id=57&Itemid=74
+/// http://sebastien.hillaire.free.fr/index.php?option=com_content&view=article&id=57&Itemid=74
 /// 
 /// Thread in the Unity3D Forum:
 /// http://forum.unity3d.com/threads/181618-Volumetric-lines
@@ -22,7 +22,7 @@
 ///
 /// Single pass instanced rendering fix by Niel 
 /// 
-Shader "Lines/SingleLine-LightSaber" {
+Shader "VRCLaserLines/LineStrip-LightSaber" {
 	Properties {
 		[NoScaleOffset] _MainTex ("Base (RGB)", 2D) = "white" {}
 		_LineWidth ("Line Width", Range(0.01, 100)) = 1.0
@@ -58,7 +58,8 @@ Shader "Lines/SingleLine-LightSaber" {
 				
 				// tell the cginc file that this is a simplified version of the shader:
 				#define LIGHT_SABER_MODE_ON
-				#include "./_SingleLineShader.cginc"
+
+				#include "./_LineStripShader.cginc"
 			ENDCG
 		}
 	}

@@ -1,8 +1,7 @@
 /// Render a single volumetric line using an additive shader which does not support changing the color
 /// 
 /// Based on the Volumetric lines algorithm by Sebastien Hillaire
-/// http://sebastien.hillaire.free.fr/index.php?option=com_content&view=article&id=57&Itemid=74
-/// 
+/// https://web.archive.org/web/20111202022753/http://sebastien.hillaire.free.fr/index.php?option=com_content&view=article&id=57&Itemid=74
 /// Thread in the Unity3D Forum:
 /// http://forum.unity3d.com/threads/181618-Volumetric-lines
 /// 
