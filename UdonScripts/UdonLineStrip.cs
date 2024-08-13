@@ -12,7 +12,7 @@ using VRC.Udon;
 /// 
 /// Shaders are by 
 /// 
-[UdonBehaviourSyncMode(BehaviourSyncMode.None)]
+[UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
 [RequireComponent(typeof(MeshFilter))]
 [RequireComponent(typeof(MeshRenderer))]
 
@@ -30,40 +30,40 @@ public class UdonLineStrip : UdonSharpBehaviour
     /// Line Color
     /// </summary>
     [SerializeField]
-    private Color m_lineColor;
+    private Color _lineColor;
 
     /// <summary>
     /// The width of the line
     /// </summary>
     [SerializeField]
-    private float m_lineWidth;
+    private float _lineWidth;
 
     /// <summary>
     /// Light saber factor
     /// </summary>
     [SerializeField]
     [Range(0.0f, 1.0f)]
-    private float m_lightSaberFactor;
+    private float _lightSaberEffect;
+    [SerializeField]
+    private bool _hasSaberEffect = false;
 
     /// <summary>
     /// This GameObject's specific material
     /// </summary>
-    private Material m_material;
+    private Material _material;
 
-    /// <summary>
-    /// This GameObject's mesh filter
-    /// </summary>
-    private MeshFilter m_meshFilter;
 
     /// <summary>
     /// The vertices of the line
     /// </summary>
     [SerializeField]
     private Vector3[] m_lineVertices;
-    private MeshFilter mf;
-    private Mesh mesh;
-    private Material material;
-    private bool iHaveComponents = false;
+    /// <summary>
+    /// This GameObject's _mesh filter
+    /// </summary>
+    private MeshFilter _meshFilter;
+
+    private Mesh _mesh;
 
     #endregion
     #region properties
@@ -83,14 +83,14 @@ public class UdonLineStrip : UdonSharpBehaviour
     /// </summary>
     public Color LineColor
     {
-        get { return m_lineColor; }
+        get { return _lineColor; }
         set
         {
             //CreateMaterial();
-            if (null != m_material)
+            if (null != _material)
             {
-                m_lineColor = value;
-                m_material.color = m_lineColor;
+                _lineColor = value;
+                _material.color = _lineColor;
             }
         }
     }
@@ -100,14 +100,14 @@ public class UdonLineStrip : UdonSharpBehaviour
     /// </summary>
     public float LineWidth
     {
-        get { return m_lineWidth; }
+        get { return _lineWidth; }
         set
         {
             //CreateMaterial();
-            if (null != m_material)
+            if (null != _material)
             {
-                m_lineWidth = value;
-                m_material.SetFloat("_LineWidth", m_lineWidth);
+                _lineWidth = value;
+                _material.SetFloat("_LineWidth", _lineWidth);
             }
             //UpdateBounds();
         }
@@ -118,14 +118,14 @@ public class UdonLineStrip : UdonSharpBehaviour
     /// </summary>
     public float LightSaberFactor
     {
-        get { return m_lightSaberFactor; }
+        get { return _lightSaberEffect; }
         set
         {
             //CreateMaterial();
-            if (null != m_material)
+            if (null != _material)
             {
-                m_lightSaberFactor = value;
-                m_material.SetFloat("_LightSaberFactor", m_lightSaberFactor);
+                _lightSaberEffect = value;
+                _material.SetFloat("_LightSaberFactor", _lightSaberEffect);
             }
         }
     }
@@ -141,29 +141,8 @@ public class UdonLineStrip : UdonSharpBehaviour
     #endregion
     private bool configureMesh()
     {
-        if (iHaveComponents)
-            return true;
-
-        if (mf == null)
-            mf = GetComponent<MeshFilter>();
-
-        if (material == null)
-        {
-            MeshRenderer mr = GetComponent<MeshRenderer>();
-            if (mr != null)
-                material = mr.material;
-        }
-        if (mf == null || material == null)
-        {
-            Debug.Log(gameObject.name + " configureMesh no mf or material");
+        if (_mesh == null || _material == null)
             return false;
-        }
-        mesh = mf.mesh;
-        if (mesh == null)
-        {
-            Debug.Log(gameObject.name + " configureMesh no mesh");
-            return false;
-        }
         //SetStartAndEndPoints(m_startPos, m_endPos);
         Vector2[] v2x8 = new Vector2[8];
         v2x8[0] = new Vector2(1.0f, 1.0f);
@@ -175,7 +154,7 @@ public class UdonLineStrip : UdonSharpBehaviour
         v2x8[6] = new Vector2(0.0f, 0.0f);
         v2x8[7] = new Vector2(0.0f, 1.0f);
 
-        mesh.uv = v2x8;
+        _mesh.uv = v2x8;
         v2x8[0] = new Vector2(1.0f, 1.0f);
         v2x8[1] = new Vector2(1.0f, -1.0f);
         v2x8[2] = new Vector2(0.0f, 1.0f);
@@ -185,7 +164,7 @@ public class UdonLineStrip : UdonSharpBehaviour
         v2x8[6] = new Vector2(1.0f, 1.0f);
         v2x8[7] = new Vector2(1.0f, -1.0f);
 
-        mesh.uv2 = v2x8;
+        _mesh.uv2 = v2x8;
         int[] indices = new int[18];
         // 2, 1, 0,
         indices[0] = 2; indices[1] = 1; indices[2] = 0;
@@ -199,7 +178,7 @@ public class UdonLineStrip : UdonSharpBehaviour
         indices[12] = 4; indices[13] = 5; indices[14] = 6;
         // 6, 5, 7
         indices[15] = 6; indices[16] = 5; indices[17] = 7;
-        mesh.SetIndices(indices, MeshTopology.Triangles, 0);
+        _mesh.SetIndices(indices, MeshTopology.Triangles, 0);
        // SetAllMaterialProperties();
         return true;
     }
@@ -223,7 +202,15 @@ public class UdonLineStrip : UdonSharpBehaviour
 
     void Start()
     {
-        
+        _meshFilter = GetComponent<MeshFilter>();
+        _mesh = new Mesh();
+        _meshFilter.mesh = _mesh;
+        MeshRenderer mr = GetComponent<MeshRenderer>();
+        mr.material = templateMaterial;
+        _material = mr.material;
+        // First set up vertices
+        // Then do UVs
+        // Set Properties
     }
     #endregion
 }
