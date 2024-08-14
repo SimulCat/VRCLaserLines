@@ -57,7 +57,7 @@ public class UdonLineStrip : UdonSharpBehaviour
     /// The vertices of the line
     /// </summary>
     [SerializeField]
-    private Vector3[] m_lineVertices;
+    private Vector3[] _lineVertices;
     /// <summary>
     /// This GameObject's _mesh filter
     /// </summary>
@@ -135,67 +135,180 @@ public class UdonLineStrip : UdonSharpBehaviour
     /// </summary>
     public Vector3[] LineVertices
     {
-        get { return m_lineVertices; }
+        get { return _lineVertices; }
     }
 
     #endregion
-    private bool configureMesh()
+    #region mesh update
+    /// <summary>
+    /// Calculate the bounds of this line based on the coordinates of the line vertices,
+    /// the line width, and the scaling of the object.
+    /// </summary>
+    private bool UpdateBounds()
     {
-        if (_mesh == null || _material == null)
+        var maxWidth = Mathf.Max(transform.lossyScale.x, transform.lossyScale.y, transform.lossyScale.z);
+        var scaledLineWidth = maxWidth * LineWidth * 0.5f;
+        var scaledLineWidthVec = new Vector3(scaledLineWidth, scaledLineWidth, scaledLineWidth);
+
+        if (_mesh== null || _lineVertices== null || _lineVertices.Length == 0)
             return false;
-        //SetStartAndEndPoints(m_startPos, m_endPos);
-        Vector2[] v2x8 = new Vector2[8];
-        v2x8[0] = new Vector2(1.0f, 1.0f);
-        v2x8[1] = new Vector2(1.0f, 0.0f);
-        v2x8[2] = new Vector2(0.5f, 1.0f);
-        v2x8[3] = new Vector2(0.5f, 0.0f);
-        v2x8[4] = new Vector2(0.5f, 0.0f);
-        v2x8[5] = new Vector2(0.5f, 1.0f);
-        v2x8[6] = new Vector2(0.0f, 0.0f);
-        v2x8[7] = new Vector2(0.0f, 1.0f);
 
-        _mesh.uv = v2x8;
-        v2x8[0] = new Vector2(1.0f, 1.0f);
-        v2x8[1] = new Vector2(1.0f, -1.0f);
-        v2x8[2] = new Vector2(0.0f, 1.0f);
-        v2x8[3] = new Vector2(0.0f, -1.0f);
-        v2x8[4] = new Vector2(0.0f, 1.0f);
-        v2x8[5] = new Vector2(0.0f, -1.0f);
-        v2x8[6] = new Vector2(1.0f, 1.0f);
-        v2x8[7] = new Vector2(1.0f, -1.0f);
-
-        _mesh.uv2 = v2x8;
-        int[] indices = new int[18];
-        // 2, 1, 0,
-        indices[0] = 2; indices[1] = 1; indices[2] = 0;
-        // 3, 1, 2,
-        indices[3] = 3; indices[4] = 1; indices[2] = 2;
-        // 4, 3, 2,
-        indices[6] = 4; indices[7] = 3; indices[8] = 2;
-        // 5, 4, 2,
-        indices[9] = 5; indices[10] = 4; indices[11] = 2;
-        // 4, 5, 6,
-        indices[12] = 4; indices[13] = 5; indices[14] = 6;
-        // 6, 5, 7
-        indices[15] = 6; indices[16] = 5; indices[17] = 7;
-        _mesh.SetIndices(indices, MeshTopology.Triangles, 0);
-       // SetAllMaterialProperties();
+        Vector3 min = _lineVertices[0];
+        Vector3 max = _lineVertices[0];
+        for (int i = 1; i < _lineVertices.Length; ++i)
+        {
+            min = new Vector3(
+                Mathf.Min(min.x, _lineVertices[i].x),
+                Mathf.Min(min.y, _lineVertices[i].y),
+                Mathf.Min(min.z, _lineVertices[i].z)
+            );
+            max = new Vector3(
+                Mathf.Max(max.x, _lineVertices[i].x),
+                Mathf.Max(max.y, _lineVertices[i].y),
+                Mathf.Max(max.z, _lineVertices[i].z)
+            );
+        }
+        _mesh.bounds.SetMinMax(min, max);
         return true;
     }
 
+
+
+    public bool BuildMeshFromVertices(Vector3[] newVertexList)
+    {
+        if (_mesh == null)
+        {
+            Debug.Log(gameObject.name + ": UdonLineStrip Mesh of Meshfilter component is null");
+            return false;
+        }
+
+        if (newVertexList == null || newVertexList.Length < 3)
+        {
+            Debug.Log(gameObject.name + ": Add at least 3 vertices to the UdonLineStrip");
+            return false;
+        }
+
+        _lineVertices = newVertexList;
+
+        // fill vertex positions, and indices
+        // 2 for each position, + 2 for the start, + 2 for the end
+        Vector3[] vertexPositions = new Vector3[_lineVertices.Length * 2 + 4];
+        // there are #vertices - 2 faces, and 3 indices each
+        int[] indices = new int[(_lineVertices.Length * 2 + 2) * 3];
+        int v = 0;
+        int x = 0;
+        vertexPositions[v++] = _lineVertices[0];
+        vertexPositions[v++] = _lineVertices[0];
+        for (int i = 0; i < _lineVertices.Length; ++i)
+        {
+            vertexPositions[v++] = _lineVertices[i];
+            vertexPositions[v++] = _lineVertices[i];
+            indices[x++] = v - 2;
+            indices[x++] = v - 3;
+            indices[x++] = v - 4;
+            indices[x++] = v - 1;
+            indices[x++] = v - 2;
+            indices[x++] = v - 3;
+        }
+        vertexPositions[v++] = _lineVertices[_lineVertices.Length - 1];
+        vertexPositions[v++] = _lineVertices[_lineVertices.Length - 1];
+        indices[x++] = v - 2;
+        indices[x++] = v - 3;
+        indices[x++] = v - 4;
+        indices[x++] = v - 1;
+        indices[x++] = v - 2;
+        indices[x++] = v - 3;
+
+        // fill texture coordinates and vertex offsets
+        Vector2[] texCoords = new Vector2[vertexPositions.Length];
+        Vector2[] vertexOffsets = new Vector2[vertexPositions.Length];
+        int t = 0;
+        int o = 0;
+        texCoords[t++] = new Vector2(1.0f, 0.0f);
+        texCoords[t++] = new Vector2(1.0f, 1.0f);
+        texCoords[t++] = new Vector2(0.5f, 0.0f);
+        texCoords[t++] = new Vector2(0.5f, 1.0f);
+        vertexOffsets[o++] = new Vector2(1.0f, -1.0f);
+        vertexOffsets[o++] = new Vector2(1.0f, 1.0f);
+        vertexOffsets[o++] = new Vector2(0.0f, -1.0f);
+        vertexOffsets[o++] = new Vector2(0.0f, 1.0f);
+        for (int i = 1; i < _lineVertices.Length - 1; ++i)
+        {
+            if ((i & 0x1) == 0x1)
+            {
+                texCoords[t++] = new Vector2(0.5f, 0.0f);
+                texCoords[t++] = new Vector2(0.5f, 1.0f);
+            }
+            else
+            {
+                texCoords[t++] = new Vector2(0.5f, 0.0f);
+                texCoords[t++] = new Vector2(0.5f, 1.0f);
+            }
+            vertexOffsets[o++] = new Vector2(0.0f, 1.0f);
+            vertexOffsets[o++] = new Vector2(0.0f, -1.0f);
+        }
+        texCoords[t++] = new Vector2(0.5f, 0.0f);
+        texCoords[t++] = new Vector2(0.5f, 1.0f);
+        texCoords[t++] = new Vector2(0.0f, 0.0f);
+        texCoords[t++] = new Vector2(0.0f, 1.0f);
+        vertexOffsets[o++] = new Vector2(0.0f, 1.0f);
+        vertexOffsets[o++] = new Vector2(0.0f, -1.0f);
+        vertexOffsets[o++] = new Vector2(1.0f, 1.0f);
+        vertexOffsets[o++] = new Vector2(1.0f, -1.0f);
+
+
+        // fill previous and next positions
+        Vector3[] prevPositions = new Vector3[vertexPositions.Length];
+        Vector4[] nextPositions = new Vector4[vertexPositions.Length];
+        int p = 0;
+        int n = 0;
+        prevPositions[p++] = _lineVertices[1];
+        prevPositions[p++] = _lineVertices[1];
+        prevPositions[p++] = _lineVertices[1];
+        prevPositions[p++] = _lineVertices[1];
+        nextPositions[n++] = _lineVertices[1];
+        nextPositions[n++] = _lineVertices[1];
+        nextPositions[n++] = _lineVertices[1];
+        nextPositions[n++] = _lineVertices[1];
+        for (int i = 1; i < _lineVertices.Length - 1; ++i)
+        {
+            prevPositions[p++] = _lineVertices[i - 1];
+            prevPositions[p++] = _lineVertices[i - 1];
+            nextPositions[n++] = _lineVertices[i + 1];
+            nextPositions[n++] = _lineVertices[i + 1];
+        }
+        prevPositions[p++] = _lineVertices[_lineVertices.Length - 2];
+        prevPositions[p++] = _lineVertices[_lineVertices.Length - 2];
+        prevPositions[p++] = _lineVertices[_lineVertices.Length - 2];
+        prevPositions[p++] = _lineVertices[_lineVertices.Length - 2];
+        nextPositions[n++] = _lineVertices[_lineVertices.Length - 2];
+        nextPositions[n++] = _lineVertices[_lineVertices.Length - 2];
+        nextPositions[n++] = _lineVertices[_lineVertices.Length - 2];
+        nextPositions[n++] = _lineVertices[_lineVertices.Length - 2];
+
+        _mesh.SetIndices(null, MeshTopology.Triangles, 0); // Reset before setting again to prevent a unity error message.
+        _mesh.vertices = vertexPositions;
+        _mesh.normals = prevPositions;
+        _mesh.tangents = nextPositions;
+        _mesh.uv = texCoords;
+        _mesh.uv2 = vertexOffsets;
+        _mesh.SetIndices(indices, MeshTopology.Triangles, 0);
+        return UpdateBounds();
+    }
+    #endregion
     #region event functions
 
 #if UNITY_EDITOR
     void OnDrawGizmos()
     {
         Gizmos.color = Color.green;
-        if (null == m_lineVertices)
+        if (null == _lineVertices)
         {
             return;
         }
-        for (int i = 0; i < m_lineVertices.Length - 1; ++i)
+        for (int i = 0; i < _lineVertices.Length - 1; ++i)
         {
-            Gizmos.DrawLine(gameObject.transform.TransformPoint(m_lineVertices[i]), gameObject.transform.TransformPoint(m_lineVertices[i + 1]));
+            Gizmos.DrawLine(gameObject.transform.TransformPoint(_lineVertices[i]), gameObject.transform.TransformPoint(_lineVertices[i + 1]));
         }
     }
 #endif
@@ -208,8 +321,7 @@ public class UdonLineStrip : UdonSharpBehaviour
         MeshRenderer mr = GetComponent<MeshRenderer>();
         mr.material = templateMaterial;
         _material = mr.material;
-        // First set up vertices
-        // Then do UVs
+        BuildMeshFromVertices(_lineVertices);
         // Set Properties
     }
     #endregion
