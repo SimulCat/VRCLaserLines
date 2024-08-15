@@ -1,7 +1,6 @@
 ﻿
 using UdonSharp;
 using UnityEngine;
-using VolumetricLines;
 using VRC.SDKBase;
 using VRC.Udon;
 
@@ -47,6 +46,9 @@ public class UdonVolumetricLine : UdonSharpBehaviour
     [SerializeField]
     private bool _hasSaberEffect = false;
 
+    /// <summary>
+    /// Template material
+    /// </summary>
     [SerializeField]
     private Material templateMaterial;
 
