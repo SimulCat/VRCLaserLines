@@ -172,8 +172,6 @@ public class UdonVolumetricLine : UdonSharpBehaviour
     /// </summary>
     private void SetAllMaterialProperties()
     {
-        SetStartAndEndPoints(_startPos, _endPos);
-
         if (_material != null)
         {
             _material.color = _lineColor;

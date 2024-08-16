@@ -22,6 +22,7 @@
 ///
 /// Single pass instanced rendering fix by Niel 
 /// 
+
 Shader "Lines/SingleLine-LightSaber" {
 	Properties {
 		[NoScaleOffset] _MainTex ("Base (RGB)", 2D) = "white" {}
@@ -30,6 +31,7 @@ Shader "Lines/SingleLine-LightSaber" {
 		_LightSaberFactor ("LightSaberFactor", Range(0.0, 1.0)) = 0.9
 		[MaterialToggle] _UvBasedLightSaberFactor("UV-Based Light Saber Calculation (Anti-Aliased)", Int) = 0
 		_Color ("Main Color", Color) = (1,1,1,1)
+		_Intensity("Intensity", Range(0.0,2.0)) = 1.0
 	}
 	SubShader {
 		// batching is forcefully disabled here because the shader simply won't work with it:

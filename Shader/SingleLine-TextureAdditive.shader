@@ -12,7 +12,7 @@
 /// 
 /// Thanks for bugfixes and improvements to Unity Forum User "Mistale"
 /// http://forum.unity3d.com/members/102350-Mistale
-/// 
+
 /// Shader code optimization and cleanup by Lex Darlog (aka DRL)
 /// http://forum.unity3d.com/members/lex-drl.67487/
 /// 
@@ -27,6 +27,7 @@ Shader "Lines/SingleLine-TextureAdditive" {
 		_LineWidth ("Line Width", Range(0.01, 100)) = 1.0
 		_LineScale ("Line Scale", Float) = 1.0
 		_Color ("Main Color", Color) = (1,1,1,1)
+		_Intensity("Intensity",Range(0.0,2.0)) = 1.0
 	}
 	SubShader {
 		// batching is forcefully disabled here because the shader simply won't work with it:
@@ -60,6 +61,7 @@ Shader "Lines/SingleLine-TextureAdditive" {
 			float _LineWidth;
 			float _LineScale;
 			fixed4 _Color;
+			float _Intensity;
 
 			// Vertex shader input attributes
 			struct a2v
@@ -130,7 +132,7 @@ Shader "Lines/SingleLine-TextureAdditive" {
 			fixed4 frag(v2f i) : SV_Target
 			{
 				UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(i);
-				fixed4 tx = tex2D(_MainTex, i.uv);
+				fixed4 tx = tex2D(_MainTex, i.uv)*_Intensity;
 				return tx * _Color;
 			}
 			ENDCG
