@@ -107,16 +107,23 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 1276666653481979541}
-  _lightSaberEffect: 0
-  _hasSaberEffect: 0
-  _material: {fileID: 2100000, guid: 56ee85607ade5e14db0d1d069fa3b8d0, type: 2}
-  templateMaterial: {fileID: 0}
-  lineLength: 0.5
-  lineWidth: 0.03
+  _lightSaberEffect: 0.58
+  lineLength: 1.2
+  lineWidth: 0.015
+  _material: {fileID: 0}
+  templateMaterial: {fileID: 2100000, guid: 31d968b60aa12104aaf7e24cc355d29b, type: 2}
   thetaDegrees: 0
-  startLocal: {x: 0, y: 0}
-  endLocal: {x: 1, y: 0}
-  lineColour: {r: 0, g: 1, b: 1, a: 1}
+  lineColour: {r: 0, g: 1, b: 1, a: 0.5019608}
+  alpha: 1
+  barbLengths: {x: 0.017, y: 0.017}
+  barbAngles: {x: 30, y: -25}
+  showTip: 1
+  tipLocation: 1
+  _starts: []
+  _ends: []
+  _tipPos: {x: 1, y: 0, z: 0}
+  _vertexPositions: []
+  indices: 
 --- !u!114 &1276666653481979541
 MonoBehaviour:
   m_ObjectHideFlags: 0

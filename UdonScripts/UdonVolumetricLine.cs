@@ -6,7 +6,7 @@ using VRC.Udon;
 
 [RequireComponent(typeof(MeshFilter))]
 [RequireComponent(typeof(MeshRenderer))]
-[UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
+[UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 public class UdonVolumetricLine : UdonSharpBehaviour
 {
     // Used to compute the average value of all the Vector3's components:

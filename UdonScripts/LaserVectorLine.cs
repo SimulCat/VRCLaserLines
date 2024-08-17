@@ -2,10 +2,8 @@
 using System;
 using UdonSharp;
 using UnityEngine;
-using UnityEngine.TestTools;
 using VRC.SDKBase;
 using VRC.Udon;
-using VRC.Udon.Wrapper.Modules;
 
 [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
 [RequireComponent(typeof(MeshFilter))]
@@ -51,11 +49,8 @@ public class LaserVectorLine : UdonSharpBehaviour
         set
         {
             //Debug.Log(string.Format("{0}: lineLength {1:F2}", gameObject.name, value));
-            if (lineLength != value)
-            {
-                lineLength = value;
-                SetStartAndEndPoints();
-            }
+            lineLength = value;
+            SetStartAndEndPoints();
         }
     }
 
@@ -97,7 +92,7 @@ public class LaserVectorLine : UdonSharpBehaviour
 
     #region properties
 
-    [SerializeField,FieldChangeCallback(nameof(ThetaDegrees))]
+    [SerializeField, FieldChangeCallback(nameof(ThetaDegrees))]
     private float thetaDegrees = 0;
     public float ThetaDegrees
     {
@@ -105,15 +100,14 @@ public class LaserVectorLine : UdonSharpBehaviour
         set
         {
             float thetaRad = thetaDegrees * Mathf.Deg2Rad;
-            //Debug.Log(string.Format("{0}: thetaDegrees {1:F2}", gameObject.name,value));
             thetaDegrees = value;
-            SetStartAndEndPoints();
+            transform.localRotation = Quaternion.Euler(0, 0, thetaDegrees);
         }
     }
 
-    [SerializeField,FieldChangeCallback(nameof(LineColour))]
+    [SerializeField, FieldChangeCallback(nameof(LineColour))]
     public Color lineColour = Color.cyan;
-    
+
     private Color currentColour = Color.white;
     [SerializeField, Range(0f, 1f), FieldChangeCallback(nameof(Alpha))]
     private float alpha = 1;
@@ -140,6 +134,11 @@ public class LaserVectorLine : UdonSharpBehaviour
                 _material.SetFloat("_Intensity", alpha);
         }
     }
+
+    [SerializeField]
+    Vector2 barbLengths = new Vector2(0.05f, 0.05f);
+    [SerializeField]
+    Vector2 barbAngles = new Vector2(30f, -25f);
 
     [SerializeField, FieldChangeCallback(nameof(ShowTip))]
     private bool showTip = true;
@@ -182,9 +181,11 @@ public class LaserVectorLine : UdonSharpBehaviour
         set { templateMaterial = value; }
     }
     [SerializeField]
-    private Vector3 _startPos = Vector3.zero;
+    private Vector3[] _starts;
     [SerializeField]
-    private Vector3 _endPos = Vector3.right; 
+    private Vector3[] _ends;
+    [SerializeField]
+    private Vector3 _tipPos = Vector3.right;
     #endregion
     #region mesh calculations
     private Bounds CalculateBounds()
@@ -193,14 +194,14 @@ public class LaserVectorLine : UdonSharpBehaviour
         var scaledLineWidth = maxWidth * LineWidth * 0.5f;
 
         var min = new Vector3(
-            Mathf.Min(_startPos.x, _endPos.x) - scaledLineWidth,
-            Mathf.Min(_startPos.y, _endPos.y) - scaledLineWidth,
-            Mathf.Min(_startPos.z, _endPos.z) - scaledLineWidth
+            Mathf.Min(_starts[0].x, _ends[0].x) - scaledLineWidth,
+            Mathf.Min(_starts[0].y, _ends[0].y) - scaledLineWidth,
+            Mathf.Min(_starts[0].z, _ends[0].z) - scaledLineWidth
         );
         var max = new Vector3(
-            Mathf.Max(_startPos.x, _endPos.x) + scaledLineWidth,
-            Mathf.Max(_startPos.y, _endPos.y) + scaledLineWidth,
-            Mathf.Max(_startPos.z, _endPos.z) + scaledLineWidth
+            Mathf.Max(_starts[0].x, _ends[0].x) + scaledLineWidth,
+            Mathf.Max(_starts[0].y, _ends[0].y) + scaledLineWidth,
+            Mathf.Max(_starts[0].z, _ends[0].z) + scaledLineWidth
         );
         Bounds bounds = new Bounds();
         bounds.min = min;
@@ -224,79 +225,115 @@ public class LaserVectorLine : UdonSharpBehaviour
     /// Sets the start and end points - updates the data of the Mesh.
     /// </summary>
     /// 
-    public void SetStartAndEndPoints()
+    [SerializeField]
+    private Vector3[] _vertexPositions;
+    private Vector3[] _otherPositions;
+    [SerializeField]
+    private int[] indices;
+
+    private int appendVertices(int idx, Vector3 start, Vector3 end)
     {
-        _startPos = Vector3.zero;
-        float theta = thetaDegrees*Mathf.Deg2Rad;
-        _endPos = new Vector3(Mathf.Cos(theta), Mathf.Sin(theta),0);
-        _endPos *= lineLength;
-
-        Vector3[] vertexPositions = {
-                _startPos,
-                _startPos,
-                _startPos,
-                _startPos,
-                _endPos,
-                _endPos,
-                _endPos,
-                _endPos,
-            };
-
-        Vector3[] other = {
-                _endPos,
-                _endPos,
-                _endPos,
-                _endPos,
-                _startPos,
-                _startPos,
-                _startPos,
-                _startPos,
-            };
-
-        _mesh.vertices = vertexPositions;
-        _mesh.normals = other;
-        UpdateBounds();
+        for (int i = 0; i < 4; i++, idx++)
+        {
+            _vertexPositions[idx] = start;
+            _otherPositions[idx] = end;
+        }
+        for (int i = 0; i < 4; i++, idx++)
+        {
+            _vertexPositions[idx] = end;
+            _otherPositions[idx] = start;
+        }
+        return idx;
     }
 
-    private bool initUVs(Mesh _mesh)
+    int prevVertexCount = -1;
+    [SerializeField]
+    int vertexCount = 0;
+    public void SetStartAndEndPoints()
+    {
+        int lineCount = showTip ? 3 : 1;
+        _starts = new Vector3[3];
+        _ends = new Vector3[3];
+        _starts[0] = Vector3.zero;
+        _ends[0] = Vector3.right * lineLength;
+        _tipPos = Vector3.right * (tipLocation * lineLength);
+        _starts[1] = _tipPos;
+        float radians = barbAngles[0]*Mathf.Deg2Rad;
+        Vector3 offset = new Vector2(-Mathf.Cos(radians),Mathf.Sin(radians));
+        _ends[1] = _tipPos + offset*barbLengths[0];
+        _starts[2] = _tipPos;
+        radians = barbAngles[1] * Mathf.Deg2Rad;
+        offset = new Vector2(-Mathf.Cos(radians), Mathf.Sin(radians));
+        _ends[2] = _tipPos + offset * barbLengths[1];
+        // float theta = thetaDegrees*Mathf.Deg2Rad;
+        vertexCount = lineCount * 8;// * (showTip ? 3 : 1);
+        if (vertexCount != prevVertexCount)
+        {
+            _vertexPositions = new Vector3[vertexCount];
+            _otherPositions = new Vector3[vertexCount];
+        }
+        int vertIdx = 0;
+        for (int i = 0; i < lineCount; i++)
+            vertIdx = appendVertices(vertIdx,_starts[i], _ends[i]);
+        if (prevVertexCount != vertexCount)
+            _mesh.Clear();
+        _mesh.vertices = _vertexPositions;
+        _mesh.normals = _otherPositions;
+        UpdateBounds();
+        if (prevVertexCount != vertexCount)
+            initUVs();
+        prevVertexCount = vertexCount;
+    }
+
+    private bool initUVs()
     {
         if (_mesh == null)
             return false;
-        Vector2[] uvs = new Vector2[8];
-        uvs[0] = new Vector2(1.0f, 1.0f);
-        uvs[1] = new Vector2(1.0f, 0.0f);
-        uvs[2] = new Vector2(0.5f, 1.0f);
-        uvs[3] = new Vector2(0.5f, 0.0f);
-        uvs[4] = new Vector2(0.5f, 0.0f);
-        uvs[5] = new Vector2(0.5f, 1.0f);
-        uvs[6] = new Vector2(0.0f, 0.0f);
-        uvs[7] = new Vector2(0.0f, 1.0f);
+        Vector2[] uvs = new Vector2[_vertexPositions.Length];
+        Vector2[] uv2 = new Vector2[_vertexPositions.Length];
+        int lineCount = showTip ? 3 : 1;
+        int t = 0;
+        int o = 0;
+        for (int i = 0; i < lineCount; i++)
+        {
+            uvs[t++] = new Vector2(1.0f, 1.0f);
+            uvs[t++] = new Vector2(1.0f, 0.0f);
+            uvs[t++] = new Vector2(0.5f, 1.0f);
+            uvs[t++] = new Vector2(0.5f, 0.0f);
+            uvs[t++] = new Vector2(0.5f, 0.0f);
+            uvs[t++] = new Vector2(0.5f, 1.0f);
+            uvs[t++] = new Vector2(0.0f, 0.0f);
+            uvs[t++] = new Vector2(0.0f, 1.0f);
+
+            uv2[o++] = new Vector2(1.0f, 1.0f);
+            uv2[o++] = new Vector2(1.0f, -1.0f);
+            uv2[o++] = new Vector2(0.0f, 1.0f);
+            uv2[o++] = new Vector2(0.0f, -1.0f);
+            uv2[o++] = new Vector2(0.0f, 1.0f);
+            uv2[o++] = new Vector2(0.0f, -1.0f);
+            uv2[o++] = new Vector2(1.0f, 1.0f);
+            uv2[o++] = new Vector2(1.0f, -1.0f);
+        }
         _mesh.uv = uvs;
-
-        Vector2[] uv2 = new Vector2[8];
-        uv2[0] = new Vector2(1.0f, 1.0f);
-        uv2[1] = new Vector2(1.0f, -1.0f);
-        uv2[2] = new Vector2(0.0f, 1.0f);
-        uv2[3] = new Vector2(0.0f, -1.0f);
-        uv2[4] = new Vector2(0.0f, 1.0f);
-        uv2[5] = new Vector2(0.0f, -1.0f);
-        uv2[6] = new Vector2(1.0f, 1.0f);
-        uv2[7] = new Vector2(1.0f, -1.0f);
-
         _mesh.uv2 = uv2;
-        int[] indices = new int[18];
-        // 2, 1, 0,
-        indices[0] = 2; indices[1] = 1; indices[2] = 0;
-        // 3, 1, 2,
-        indices[3] = 3; indices[4] = 1; indices[5] = 2;
-        // 4, 3, 2,
-        indices[6] = 4; indices[7] = 3; indices[8] = 2;
-        // 5, 4, 2,
-        indices[9] = 5; indices[10] = 4; indices[11] = 2;
-        // 4, 5, 6,
-        indices[12] = 4; indices[13] = 5; indices[14] = 6;
-        // 6, 5, 7
-        indices[15] = 6; indices[16] = 5; indices[17] = 7;
+        int idx = 0;
+        indices = new int[lineCount * 18];
+        for (int i = 0; i < lineCount; i++)
+        {
+            int offs = i * 8;
+            // 2, 1, 0,
+            indices[idx++] = offs + 2; indices[idx++] = offs + 1; indices[idx++] = offs + 0;
+            // 3, 1, 2,
+            indices[idx++] = offs + 3; indices[idx++] = offs + 1; indices[idx++] = offs + 2;
+            // 4, 3, 2,
+            indices[idx++] = offs + 4; indices[idx++] = offs + 3; indices[idx++] = offs + 2;
+            // 5, 4, 2,
+            indices[idx++] = offs + 5; indices[idx++] = offs + 4; indices[idx++] = offs + 2;
+            // 4, 5, 6,
+            indices[idx++] = offs + 4; indices[idx++] = offs + 5; indices[idx++] = offs + 6;
+            // 6, 5, 7
+            indices [idx++] = offs + 6; indices[idx++] = offs + 5; indices[idx++] = offs + 7;
+        }
         _mesh.SetIndices(indices, MeshTopology.Triangles, 0);
         return true;
     }
@@ -309,7 +346,7 @@ public class LaserVectorLine : UdonSharpBehaviour
         return Vector3.Dot(transform.lossyScale, Average);
     }
 
-    public void UpdateLineScale()
+    private void UpdateLineScale()
     {
         if (_material != null)
         {
@@ -352,8 +389,8 @@ public class LaserVectorLine : UdonSharpBehaviour
         MeshRenderer mr = GetComponent<MeshRenderer>();
         mr.material = templateMaterial;
         _material = mr.material;
+        ThetaDegrees = thetaDegrees;
         SetStartAndEndPoints();
-        initUVs(_mesh);
         SetAllMaterialProperties();
     }
 
