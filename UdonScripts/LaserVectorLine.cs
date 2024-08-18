@@ -169,7 +169,18 @@ public class LaserVectorLine : UdonSharpBehaviour
             }
         }
     }
+    [SerializeField,FieldChangeCallback(nameof(IsIncoming))]
+    private bool isIncoming = false;
 
+    public bool IsIncoming
+    {
+        get => isIncoming;
+        set
+        {
+            isIncoming = value;
+            SetStartAndEndPoints();
+        }
+    }
     /// <summary>
     /// Gets or sets the tmplate material.
     /// Setting this will only have an impact once. 
@@ -180,12 +191,13 @@ public class LaserVectorLine : UdonSharpBehaviour
         get { return templateMaterial; }
         set { templateMaterial = value; }
     }
-    [SerializeField]
+    //[SerializeField]
     private Vector3[] _starts;
-    [SerializeField]
+    //[SerializeField]
     private Vector3[] _ends;
-    [SerializeField]
+    //[SerializeField]
     private Vector3 _tipPos = Vector3.right;
+
     #endregion
     #region mesh calculations
     private Bounds CalculateBounds()
@@ -225,11 +237,9 @@ public class LaserVectorLine : UdonSharpBehaviour
     /// Sets the start and end points - updates the data of the Mesh.
     /// </summary>
     /// 
-    [SerializeField]
+    //[SerializeField]
     private Vector3[] _vertexPositions;
     private Vector3[] _otherPositions;
-    [SerializeField]
-    private int[] indices;
 
     private int appendVertices(int idx, Vector3 start, Vector3 end)
     {
@@ -254,9 +264,9 @@ public class LaserVectorLine : UdonSharpBehaviour
         int lineCount = showTip ? 3 : 1;
         _starts = new Vector3[3];
         _ends = new Vector3[3];
-        _starts[0] = Vector3.zero;
-        _ends[0] = Vector3.right * lineLength;
-        _tipPos = Vector3.right * (tipLocation * lineLength);
+        _starts[0] = isIncoming ? Vector3.left * lineLength : Vector3.zero;
+        _ends[0] = isIncoming ?  Vector3.zero : Vector3.right * lineLength;
+        _tipPos = (isIncoming ? (Vector3.left * (1-tipLocation)) : (Vector3.right * tipLocation)) * lineLength;
         _starts[1] = _tipPos;
         float radians = barbAngles[0]*Mathf.Deg2Rad;
         Vector3 offset = new Vector2(-Mathf.Cos(radians),Mathf.Sin(radians));
@@ -281,16 +291,16 @@ public class LaserVectorLine : UdonSharpBehaviour
         _mesh.normals = _otherPositions;
         UpdateBounds();
         if (prevVertexCount != vertexCount)
-            initUVs();
+            initUVs(vertexCount);
         prevVertexCount = vertexCount;
     }
 
-    private bool initUVs()
+    private bool initUVs(int numVertices)
     {
         if (_mesh == null)
             return false;
-        Vector2[] uvs = new Vector2[_vertexPositions.Length];
-        Vector2[] uv2 = new Vector2[_vertexPositions.Length];
+        Vector2[] uvs = new Vector2[numVertices];
+        Vector2[] uv2 = new Vector2[numVertices];
         int lineCount = showTip ? 3 : 1;
         int t = 0;
         int o = 0;
@@ -317,7 +327,7 @@ public class LaserVectorLine : UdonSharpBehaviour
         _mesh.uv = uvs;
         _mesh.uv2 = uv2;
         int idx = 0;
-        indices = new int[lineCount * 18];
+        int[] indices = new int[lineCount * 18];
         for (int i = 0; i < lineCount; i++)
         {
             int offs = i * 8;
