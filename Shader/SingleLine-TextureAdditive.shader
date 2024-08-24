@@ -24,7 +24,7 @@
 Shader "Lines/SingleLine-TextureAdditive" {
 	Properties {
 		[NoScaleOffset] _MainTex ("Base (RGB)", 2D) = "white" {}
-		_LineWidth ("Line Width", Range(0.01, 100)) = 1.0
+		_LineWidth ("Line Width", Range(0.001, 100)) = 1.0
 		_LineScale ("Line Scale", Float) = 1.0
 		_Color ("Main Color", Color) = (1,1,1,1)
 		_Intensity("Intensity",Range(0.0,2.0)) = 1.0

@@ -63,8 +63,6 @@ public class UdonVolumetricLine : UdonSharpBehaviour
     /// </summary>
     private MeshFilter _meshFilter;
     private Mesh _mesh;
-    [SerializeField]
-    private bool iHaveComponents = false;
     #endregion
 
     #region properties

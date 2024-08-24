@@ -41,8 +41,7 @@ public class UdonLineStrip : UdonSharpBehaviour
     /// <summary>
     /// Light saber factor
     /// </summary>
-    [SerializeField]
-    [Range(0.0f, 1.0f)]
+    [SerializeField, Range(0.0f, 1.0f), FieldChangeCallback(nameof(LightSaberEffect))]
     private float _lightSaberEffect;
     [SerializeField]
     private bool _hasSaberEffect = false;
@@ -109,22 +108,24 @@ public class UdonLineStrip : UdonSharpBehaviour
                 _lineWidth = value;
                 _material.SetFloat("_LineWidth", _lineWidth);
             }
-            //UpdateBounds();
+            UpdateBounds();
         }
     }
 
     /// <summary>
     /// Get or set the light saber factor of this volumetric line's material
     /// </summary>
-    public float LightSaberFactor
+    public float LightSaberEffect
     {
         get { return _lightSaberEffect; }
         set
         {
-            //CreateMaterial();
-            if (null != _material)
-            {
+            value = Mathf.Clamp01(value);
+            if (value != _lightSaberEffect)
                 _lightSaberEffect = value;
+            //CreateMaterial();
+            if (_hasSaberEffect)
+            {
                 _material.SetFloat("_LightSaberFactor", _lightSaberEffect);
             }
         }
@@ -295,9 +296,26 @@ public class UdonLineStrip : UdonSharpBehaviour
         _mesh.SetIndices(indices, MeshTopology.Triangles, 0);
         return UpdateBounds();
     }
+
+    private void SetAllMaterialProperties()
+    {
+        if (_material != null)
+        {
+            _material.color = _lineColor;
+            _material.SetFloat("_LineWidth", _lineWidth);
+            if (_hasSaberEffect)
+                _material.SetFloat("_LightSaberFactor", _lightSaberEffect);
+            //UpdateLineScale();
+        }
+
+    }
     #endregion
     #region event functions
 
+    private void OnValidate()
+    {
+        SetAllMaterialProperties();
+    }
 #if UNITY_EDITOR
     void OnDrawGizmos()
     {
@@ -321,7 +339,9 @@ public class UdonLineStrip : UdonSharpBehaviour
         MeshRenderer mr = GetComponent<MeshRenderer>();
         mr.material = templateMaterial;
         _material = mr.material;
+        _hasSaberEffect = _material != null && _material.HasProperty("_LightSaberFactor");
         BuildMeshFromVertices(_lineVertices);
+        SetAllMaterialProperties();
         // Set Properties
     }
     #endregion
