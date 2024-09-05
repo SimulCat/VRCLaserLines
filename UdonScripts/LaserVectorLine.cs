@@ -99,9 +99,10 @@ public class LaserVectorLine : UdonSharpBehaviour
         get => thetaDegrees;
         set
         {
-            float thetaRad = thetaDegrees * Mathf.Deg2Rad;
             thetaDegrees = value;
-            transform.localRotation = Quaternion.Euler(0, 0, thetaDegrees);
+            Vector3 rot = transform.localEulerAngles;
+            rot.z = thetaDegrees;
+            transform.localRotation = Quaternion.Euler(rot);
         }
     }
 
