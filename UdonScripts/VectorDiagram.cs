@@ -48,32 +48,39 @@ public class VectorDiagram : UdonSharpBehaviour
         }
     }
 
+    private void hideLabels()
+    {
+        if (vecLabels == null)
+            return;
+        for (int i = 0; i < vecLabels.Length; i++)
+        {
+            if (vecLabels[i] != null)
+                vecLabels[i].Visible = false;
+        }
+    }
+
+    private void hideVectors()
+    {
+        if (kVectors == null)
+            return;
+        for (int i = 0; i < kVectors.Length; i++)
+        {
+            if (kVectors[i] != null)
+                kVectors[i].SetProgramVariable("alpha", 0f);
+        }
+    }
+
+    private void hideLines()
+    {
+
+    }
     private void kVectorDisplay(int demoMode)
     {
         arrowLength = (arrowLambda) / lambda;
         if (demoMode <= 0)
         {
-            if (kVectors != null)
-            {
-                for (int i = 0; i < kVectors.Length; i++)
-                {
-                    if (kVectors[i] != null)
-                    {
-                        kVectors[i].SetProgramVariable("alpha", 0f);
-                        //Debug.Log(string.Format("kVectors[{0}]: alpha=>{1:0.0}", i, 0f));
-                    }
-                    //else
-                        //Debug.Log(string.Format("kVectors[{0}]: null",i));
-                }
-            }
-            if (vecLabels != null)
-            {
-                for(int i = 0;i < vecLabels.Length; i++)
-                {
-                    if (vecLabels[i] != null)
-                        vecLabels[i].Visible = false;
-                }
-            }
+            hideLabels();
+            hideVectors();
             return;
         }
         if (kVectors == null || kVectors.Length == 0)
@@ -153,13 +160,13 @@ public class VectorDiagram : UdonSharpBehaviour
             if (kVectors[i] != null)
             {
                 UdonBehaviour tmp = kVectors[i];
+                tmp.SetProgramVariable<bool>("showTip", demoMode >= 2);
                 if (endPoint.x > 0)
                 {
                     tmp.transform.localPosition = (Vector3)startPoint + layerOffset;
                     tmp.SetProgramVariable("lineLength", lineLength);
                     tmp.SetProgramVariable("thetaDegrees", thetaRadians * Mathf.Rad2Deg);
                     tmp.SetProgramVariable("alpha", 1f);
-                    tmp.SetProgramVariable<bool>("showTip", demoMode >= 2);
                 }
                 else
                     tmp.SetProgramVariable("alpha", 0f);
@@ -173,7 +180,7 @@ public class VectorDiagram : UdonSharpBehaviour
             {
                 if (vecLabels[i] != null)
                 {
-                    int posIdx = i + 1;
+                    int posIdx = i;
                     string labelText;
                     //string mul = posIdx > 1 ? string.Format("{0}*",posIdx) : ""; 
                     switch (demoMode)
@@ -185,7 +192,7 @@ public class VectorDiagram : UdonSharpBehaviour
                             labelText = string.Format("Δk<sub>{0}</sub>={0}/d", posIdx);
                             break;
                         case 3:
-                            string mul = posIdx < 2 ? "h" : string.Format("{0}h", posIdx);
+                            string mul = posIdx == 1 ? "h" : string.Format("{0}h", posIdx);
                             labelText = string.Format("Δp<sub>{0}</sub>={1}/d", posIdx,mul);
                             break;
                         default:
@@ -211,30 +218,34 @@ public class VectorDiagram : UdonSharpBehaviour
         if (kLines == null)
             return;
         Vector3 offset = new Vector3(0,0,layerGap*.75f);
-        int posMax = (kEndPoints == null) || (labelPoints == null) ? 0 : kEndPoints.Length;
+        int maxIndex = (kEndPoints == null) || (labelPoints == null) ? 0 : kEndPoints.Length;
         for (int i = 0; i < kLines.Length; i++)
         {
-            int j = i + 1;
-            if (kLines[i] != null)
+            int lineIndex = i; // + 1;
+            UdonBehaviour kptr = kLines[i];
+            if (kptr != null)
             {
-                if (demoMode < 2 || j >= posMax)
-                    kLines[i].SetProgramVariable("alpha",0f);
+                if (demoMode < 2 || lineIndex >= maxIndex)
+                    kptr.SetProgramVariable("alpha",0f);
                 else
                 {
-                    if (labelPoints[j].x < 0)
-                        kLines[i].SetProgramVariable("alpha",0f);
+                    if (labelPoints[lineIndex].x < 0)
+                        kptr.SetProgramVariable("alpha",0f);
                     else
                     {
-                        kLines[i].SetProgramVariable("alpha",1f);
+                        kptr.SetProgramVariable("alpha",1f);
+
                         if (demoMode == 2)
                         {
-                            kLines[i].SetProgramVariable("lineLength",displayRect.x);
-                            kLines[i].transform.localPosition = new Vector3(0, labelPoints[j].y, 0) + offset;
+                            kptr.SetProgramVariable<bool>("showTip",false);
+                            kptr.SetProgramVariable("lineLength",displayRect.x);
+                            kptr.transform.localPosition = new Vector3(0, labelPoints[lineIndex].y, 0) + offset;
                         }
                         else
                         {
-                            kLines[i].SetProgramVariable("lineLength",kEndPoints[j].x - kStartPoints[j].x);
-                            kLines[i].transform.localPosition = (Vector3)kStartPoints[j]+ offset;
+                            kptr.SetProgramVariable<bool>("showTip", true);
+                            kptr.SetProgramVariable("lineLength",kEndPoints[lineIndex].x - kStartPoints[lineIndex].x);
+                            kptr.transform.localPosition = (Vector3)kStartPoints[lineIndex]+ offset;
                         }
                     }
                 }
@@ -257,10 +268,10 @@ public class VectorDiagram : UdonSharpBehaviour
         }
         if (kComponents == null)
             return;
-        int posMax = kEndPoints.Length - 1;
-        if (kComponents.Length < posMax)
-            posMax = kComponents.Length;
-        for (int j = 0; j < posMax; j++)
+        int maxIndex = kEndPoints.Length - 1;
+        if (kComponents.Length < maxIndex)
+            maxIndex = kComponents.Length;
+        for (int j = 0; j < maxIndex; j++)
         {
             if (kComponents[j] != null)
             {

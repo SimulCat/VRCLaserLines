@@ -151,7 +151,6 @@ public class LaserVectorLine : UdonSharpBehaviour
             if (showTip != value)
             {
                 showTip = value;
-                //RefreshTips();
             }
         }
     }
@@ -166,7 +165,6 @@ public class LaserVectorLine : UdonSharpBehaviour
             if (tipLocation != value)
             {
                 tipLocation = value;
-                //UpdateTipLocations();
             }
         }
     }
@@ -277,7 +275,7 @@ public class LaserVectorLine : UdonSharpBehaviour
         offset = new Vector2(-Mathf.Cos(radians), Mathf.Sin(radians));
         _ends[2] = _tipPos + offset * barbLengths[1];
         // float theta = thetaDegrees*Mathf.Deg2Rad;
-        vertexCount = lineCount * 8;// * (showTip ? 3 : 1);
+        vertexCount = lineCount * 8;
         if (vertexCount != prevVertexCount)
         {
             _vertexPositions = new Vector3[vertexCount];
