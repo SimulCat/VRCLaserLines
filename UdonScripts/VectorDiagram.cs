@@ -221,31 +221,35 @@ public class VectorDiagram : UdonSharpBehaviour
         int maxIndex = (kEndPoints == null) || (labelPoints == null) ? 0 : kEndPoints.Length;
         for (int i = 0; i < kLines.Length; i++)
         {
-            int lineIndex = i; // + 1;
             UdonBehaviour kptr = kLines[i];
             if (kptr != null)
             {
-                if (demoMode < 2 || lineIndex >= maxIndex)
+                if (demoMode < 2 || i >= maxIndex)
                     kptr.SetProgramVariable("alpha",0f);
                 else
                 {
-                    if (labelPoints[lineIndex].x < 0)
+                    if (labelPoints[i].x < 0)
                         kptr.SetProgramVariable("alpha",0f);
                     else
                     {
-                        kptr.SetProgramVariable("alpha",1f);
-
                         if (demoMode == 2)
                         {
+                            kptr.SetProgramVariable("alpha", 1f);
                             kptr.SetProgramVariable<bool>("showTip",false);
                             kptr.SetProgramVariable("lineLength",displayRect.x);
-                            kptr.transform.localPosition = new Vector3(0, labelPoints[lineIndex].y, 0) + offset;
+                            kptr.transform.localPosition = new Vector3(0, labelPoints[i].y, 0) + offset;
                         }
                         else
                         {
-                            kptr.SetProgramVariable<bool>("showTip", true);
-                            kptr.SetProgramVariable("lineLength",kEndPoints[lineIndex].x - kStartPoints[lineIndex].x);
-                            kptr.transform.localPosition = (Vector3)kStartPoints[lineIndex]+ offset;
+                            if (i == 0)
+                                kptr.SetProgramVariable("alpha", 0f);
+                            else
+                            {
+                                kptr.SetProgramVariable("alpha", 1f);
+                                kptr.SetProgramVariable<bool>("showTip", true);
+                                kptr.SetProgramVariable("lineLength", kEndPoints[i].x - kStartPoints[i].x);
+                                kptr.transform.localPosition = (Vector3)kStartPoints[i] + offset;
+                            }
                         }
                     }
                 }
