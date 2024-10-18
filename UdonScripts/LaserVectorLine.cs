@@ -124,6 +124,7 @@ public class LaserVectorLine : UdonSharpBehaviour
         }
     }
 
+    private float _alpha = -1;
     public float Alpha
     {
         get => alpha;
@@ -131,8 +132,11 @@ public class LaserVectorLine : UdonSharpBehaviour
         {
             //Debug.Log(string.Format("{0}: alpha {1:F2}", gameObject.name, value));
             alpha = value;
-            if (_material != null)
+            if (_material != null && _alpha != alpha)
+            {
                 _material.SetFloat("_Intensity", alpha);
+                _alpha = alpha;
+            }
         }
     }
 
