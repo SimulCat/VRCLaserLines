@@ -13,19 +13,21 @@ public class VectorDiagram : UdonSharpBehaviour
     [Tooltip("Slit Width (mm)"),SerializeField, FieldChangeCallback(nameof(SlitWidth))] float slitWidth;
     [Tooltip("Slit Pitch (mm)"), SerializeField,FieldChangeCallback(nameof(SlitPitch))] public float slitPitch = 436.5234f;
     [Tooltip("Lambda (mm)"), SerializeField, FieldChangeCallback(nameof(Lambda))] public float lambda = 48.61111f;
-    [Tooltip("Dimension Scale 1:x"), SerializeField, FieldChangeCallback(nameof(SimScale))] public float simScale = 1.0f;
+    [Tooltip("Dimension Scale 1:x"), SerializeField, FieldChangeCallback(nameof(VecScale))] public float vecScale = 0.001f;
 
     [SerializeField] private float arrowLambda = 18;
-    [SerializeField] private float layerGap = 0.003f;
+    //[SerializeField] private float layerGap = 0.003f;
     [SerializeField, FieldChangeCallback(nameof(DemoMode))] public int demoMode;
     [SerializeField] LaserVectorLine[] kVectors;
     [SerializeField] LaserVectorLine[] kComponents;
     [SerializeField] UdonLabel[] vecLabels;
     [SerializeField] LaserVectorLine[] kLines;
 
-    Vector2[] kEndPoints;
-    [SerializeField] 
+    //[SerializeField] 
     Vector2[] kStartPoints;
+    //[SerializeField]
+    Vector2[] kEndPoints;
+
     Vector2[] labelPoints;
     string[] beamAngles;
     private int needsUpdate = -1;
@@ -92,13 +94,14 @@ public class VectorDiagram : UdonSharpBehaviour
         }
         if (kVectors == null || kVectors.Length == 0)
             return;
-        Vector3 layerOffset = new Vector3(0, 0, layerGap);
+        //Vector3 layerOffset = new Vector3(0, 0, layerGap);
         kEndPoints = new Vector2[kVectors.Length];
         kStartPoints = new Vector2[kVectors.Length];
         beamAngles = new string[kVectors.Length];
         labelPoints = new Vector2[kVectors.Length];
         float sinTheta;
         float WidthX2 = slitWidth * 2;
+
         for (int i = 0; i < kVectors.Length; i++)
         {
             kStartPoints[i] = Vector2.left;
@@ -109,7 +112,7 @@ public class VectorDiagram : UdonSharpBehaviour
                 sinTheta = i == 0 ? 0 : lambda * (2 * i + 1) / WidthX2;
             float lineLength = arrowLength;
             Vector2 endPoint = Vector2.left;
-            Vector2 startPoint = Vector3.zero;
+            Vector2 startPoint = Vector2.zero;
             Vector2 labelPoint = Vector2.left;
             bool lessThan90Deg = Mathf.Abs(sinTheta) < 1f;
             thetaRadians = lessThan90Deg ? Mathf.Asin(sinTheta) : 0;
@@ -119,6 +122,22 @@ public class VectorDiagram : UdonSharpBehaviour
             {
                 switch (demoMode)
                 {
+                    case 1:
+                        {
+                            endPoint.y = sinTheta * displayRect.x;
+                            if (endPoint.y <= halfHeight)
+                                endPoint.x = displayRect.x;
+                            else
+                            {
+                                endPoint.y = halfHeight;
+                                endPoint.x = (halfHeight / sinTheta) * Mathf.Cos(thetaRadians);
+                            }
+                            lineLength = (endPoint - startPoint).magnitude;
+                            labelPoint = endPoint;
+                            kStartPoints[i] = startPoint;
+                            kEndPoints[i] = endPoint;
+                        }
+                        break;
                     case 2:
                         endPoint.y = sinTheta * arrowLength;
                         if (endPoint.y <= halfHeight)
@@ -183,7 +202,7 @@ public class VectorDiagram : UdonSharpBehaviour
                 vecLine.ShowTip = demoMode >= 2;
                 if (endPoint.x > 0)
                 {
-                    vecLine.transform.localPosition = (Vector3)startPoint + layerOffset;
+                    vecLine.transform.localPosition = (Vector3)startPoint;// + layerOffset;
                     vecLine.LineLength = lineLength;
                     vecLine.ThetaDegrees = thetaRadians * Mathf.Rad2Deg;
                     vecLine.Alpha = 1f;
@@ -222,7 +241,7 @@ public class VectorDiagram : UdonSharpBehaviour
                     }
                     if (demoMode > 0 && labelPoints[posIdx].x > 0)
                     {
-                        lbl.LocalPostion = (Vector3)labelPoints[posIdx]+(layerOffset*0.5f);
+                        lbl.LocalPostion = (Vector3)labelPoints[posIdx]; //+(layerOffset*0.5f);
                         lbl.Visible = true;
                         lbl.Text = labelText;
                     }
@@ -237,7 +256,7 @@ public class VectorDiagram : UdonSharpBehaviour
     {
         if (kLines == null)
             return;
-        Vector3 offset = new Vector3(0,0,layerGap*.75f);
+        //Vector3 offset = new Vector3(0,0,layerGap*.75f);
         int maxPoint = (kEndPoints == null) ? 0 : kEndPoints.Length;
         for (int i = 0; i < kLines.Length; i++)
         {
@@ -253,7 +272,7 @@ public class VectorDiagram : UdonSharpBehaviour
                 case 2:
                     kptr.ShowTip = false;
                     kptr.LineLength = displayRect.x;
-                    kptr.transform.localPosition = new Vector3(0, labelPoints[i].y, 0) + offset;
+                        kptr.transform.localPosition = new Vector3(0, labelPoints[i].y, 0); // + offset;
                     break;
                 case 3:
                 case 4:
@@ -263,7 +282,7 @@ public class VectorDiagram : UdonSharpBehaviour
                     {
                         kptr.ShowTip = true;
                         kptr.LineLength = kEndPoints[i].x - kStartPoints[i].x;
-                        kptr.transform.localPosition = (Vector3)kStartPoints[i] + offset;
+                            kptr.transform.localPosition = (Vector3)kStartPoints[i]; // + offset;
                     }
                     break;
                 default:
@@ -277,7 +296,7 @@ public class VectorDiagram : UdonSharpBehaviour
     }
     private void componentDisplay(int demoMode)
     {
-        Vector3 linePos = new Vector3(0,0, layerGap * 1.5f);
+        Vector3 linePos = Vector3.zero; // new Vector3(0,0, layerGap * 1.5f);
         if ( kComponents == null)
             return;            
         if (demoMode < 2)
@@ -342,7 +361,6 @@ public class VectorDiagram : UdonSharpBehaviour
         {
             needsUpdate |= slitPitch != value ? 16 : 0;
             slitPitch = value;
-            //Debug.Log("Vect Gap: " +  slitPitch);
         } 
     }
     public float Lambda
@@ -355,14 +373,13 @@ public class VectorDiagram : UdonSharpBehaviour
         }
     }
 
-    public float SimScale
+    public float VecScale
     {
-        get=>simScale;
+        get=>vecScale;
         set
         {
-            value = Mathf.Clamp(value, 0.01f, 100f);
-            needsUpdate |= (simScale != value) ? 64 : 0;
-            simScale = value;
+            needsUpdate |= (vecScale != value) ? 64 : 0;
+            vecScale = value;
         }
     }
     private void Update()
