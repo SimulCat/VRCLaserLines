@@ -288,6 +288,8 @@ public class LaserVectorLine : UdonSharpBehaviour
         int vertIdx = 0;
         for (int i = 0; i < lineCount; i++)
             vertIdx = appendVertices(vertIdx,_starts[i], _ends[i]);
+        if (_mesh == null)
+            return;
         if (prevVertexCount != vertexCount)
             _mesh.Clear();
         _mesh.vertices = _vertexPositions;

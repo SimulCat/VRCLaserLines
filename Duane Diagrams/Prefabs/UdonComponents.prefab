@@ -62,7 +62,7 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 995275335215451962}
-  latticeGrid: {fileID: 1441544440481050532}
+  latticeGrid: {fileID: 2029524333377232163}
   Incident: {fileID: 7588430859370931574}
   Exit: {fileID: 4474514346571166893}
   DeltaVec: {fileID: 5519011510263868609}
@@ -1094,7 +1094,7 @@ PrefabInstance:
         type: 3}
       propertyPath: m_fontAsset
       value: 
-      objectReference: {fileID: 11400000, guid: 821699a7f3d98504796c87ca3c1faec1,
+      objectReference: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee,
         type: 2}
     - target: {fileID: 3826253793939136718, guid: 8228c2fb6642ec545a84279109790d91,
         type: 3}
@@ -1120,8 +1120,7 @@ PrefabInstance:
         type: 3}
       propertyPath: m_sharedMaterial
       value: 
-      objectReference: {fileID: -2463432894719657359, guid: 821699a7f3d98504796c87ca3c1faec1,
-        type: 2}
+      objectReference: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
     - target: {fileID: 3826253793939136718, guid: 8228c2fb6642ec545a84279109790d91,
         type: 3}
       propertyPath: m_fontColor32.rgba
@@ -1141,7 +1140,7 @@ PrefabInstance:
         type: 3}
       propertyPath: m_fontAsset
       value: 
-      objectReference: {fileID: 11400000, guid: 821699a7f3d98504796c87ca3c1faec1,
+      objectReference: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee,
         type: 2}
     - target: {fileID: 6586559993988393939, guid: 8228c2fb6642ec545a84279109790d91,
         type: 3}
@@ -1167,8 +1166,7 @@ PrefabInstance:
         type: 3}
       propertyPath: m_sharedMaterial
       value: 
-      objectReference: {fileID: -2463432894719657359, guid: 821699a7f3d98504796c87ca3c1faec1,
-        type: 2}
+      objectReference: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
     - target: {fileID: 6586559993988393939, guid: 8228c2fb6642ec545a84279109790d91,
         type: 3}
       propertyPath: m_fontColor32.rgba

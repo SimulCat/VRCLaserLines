@@ -7,7 +7,7 @@ public class UdonComponents : UdonSharpBehaviour
 {
     [Header("Lattice Diagram")]
     [SerializeField]
-    UdonGrid2D latticeGrid;
+    UdonBehaviour latticeGrid;
 
     [Header("Vector Pointers")]
     [SerializeField] UdonBehaviour Incident;
@@ -84,7 +84,7 @@ public class UdonComponents : UdonSharpBehaviour
     SyncedSlider RotationControl;
 
     [SerializeField, FieldChangeCallback(nameof(LatticeRotation))]
-    float latticeRotation;
+    public float latticeRotation;
 
     private Transform latticeTransform;
 
@@ -195,7 +195,7 @@ public class UdonComponents : UdonSharpBehaviour
             momentumY.SetProgramVariable("lineLength",Mathf.Abs(deltaLattice.y));
             momentumY.SetProgramVariable("alpha",deltaLattice.y != 0 ? 1f : 0f);
         }
-        if (showEwald)
+        if (showEwald && ewaldCircle!=null)
         {
             ewaldCircle.SetProgramVariable("radius", lineLength);
         }
