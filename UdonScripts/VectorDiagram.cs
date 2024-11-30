@@ -23,11 +23,11 @@ public class VectorDiagram : UdonSharpBehaviour
     [SerializeField] UdonLabel[] vecLabels;
     [SerializeField] LaserVectorLine[] kLines;
 
-    //[SerializeField] 
+   // [SerializeField] 
     Vector2[] kStartPoints;
-    //[SerializeField]
+ //   [SerializeField]
     Vector2[] kEndPoints;
-
+    Vector2[] kLinePoints;
     Vector2[] labelPoints;
     string[] beamAngles;
     private int needsUpdate = -1;
@@ -79,13 +79,9 @@ public class VectorDiagram : UdonSharpBehaviour
         }
     }
 
-    private void hideLines()
-    {
-
-    }
     private void kVectorDisplay(int demoMode)
     {
-        arrowLength = (arrowLambda) / lambda;
+        arrowLength = arrowLambda / lambda;
         if (demoMode <= 0)
         {
             hideLabels();
@@ -96,6 +92,7 @@ public class VectorDiagram : UdonSharpBehaviour
             return;
         //Vector3 layerOffset = new Vector3(0, 0, layerGap);
         kEndPoints = new Vector2[kVectors.Length];
+        kLinePoints = new Vector2[kLines.Length];
         kStartPoints = new Vector2[kVectors.Length];
         beamAngles = new string[kVectors.Length];
         labelPoints = new Vector2[kVectors.Length];
@@ -148,8 +145,8 @@ public class VectorDiagram : UdonSharpBehaviour
                             kStartPoints[i].x = 0;
                         }
                         labelPoint.y = endPoint.y;
-                        kEndPoints[i] = endPoint;
                         kStartPoints[i].y = startPoint.y;
+                        kEndPoints[i] = endPoint;
                         break;
                     case 3:
                         lineLength = arrowLength / 5f;
@@ -263,32 +260,36 @@ public class VectorDiagram : UdonSharpBehaviour
             LaserVectorLine kptr = kLines[i];
             if (kptr != null)
             {
-                kptr.Alpha = (i >= maxPoint || kStartPoints[i].x < 0) ? 0 : 1;
                 switch (demoMode)
                 {
                 case 1:
-                    kptr.Alpha = 0f;
+                        kptr.Alpha = 0f;
                     break;
-                case 2:
-                    kptr.ShowTip = false;
-                    kptr.LineLength = displayRect.x;
-                        kptr.transform.localPosition = new Vector3(0, labelPoints[i].y, 0); // + offset;
+                case 2: // Wave K-vector lines horizontal
+                        if ((i >= maxPoint) || (i == 0) || (kStartPoints[i].x < 0) || (kEndPoints[i].y > halfHeight))
+                            kptr.Alpha = 0;
+                        else
+                        {
+                            kptr.Alpha = 1;
+                            kptr.ShowTip = false;
+                            kptr.LineLength = displayRect.x;
+                            kptr.transform.localPosition = new Vector3(0, labelPoints[i].y, 0); // + offset;
+                        }
                     break;
-                case 3:
+                case 3: // Photon K-vector lines
                 case 4:
-                    if (i == 0)
-                        kptr.Alpha = 0;
-                    else
-                    {
-                        kptr.ShowTip = true;
-                        kptr.LineLength = kEndPoints[i].x - kStartPoints[i].x;
+                        if (i >= maxPoint || (i == 0) || (kStartPoints[i].x < 0))
+                            kptr.Alpha = 0;
+                        else
+                        {
+                            kptr.Alpha = 1;
+                            kptr.ShowTip = true;
+                            kptr.LineLength = kEndPoints[i].x - kStartPoints[i].x;
                             kptr.transform.localPosition = (Vector3)kStartPoints[i]; // + offset;
-                    }
+                        }
                     break;
                 default:
-                    {
                         kptr.Alpha = 0f;
-                    }
                     break;
                 }
             }
