@@ -13,7 +13,7 @@ public class VectorDiagram : UdonSharpBehaviour
     [Tooltip("Slit Width (mm)"),SerializeField, FieldChangeCallback(nameof(SlitWidth))] float slitWidth;
     [Tooltip("Slit Pitch (mm)"), SerializeField,FieldChangeCallback(nameof(SlitPitch))] public float slitPitch = 436.5234f;
     [Tooltip("Lambda (mm)"), SerializeField, FieldChangeCallback(nameof(Lambda))] public float lambda = 48.61111f;
-    [Tooltip("Dimension Scale 1:x"), SerializeField, FieldChangeCallback(nameof(VecScale))] public float vecScale = 0.001f;
+    [Tooltip("Scale simulation mm to diagram metres"), SerializeField, FieldChangeCallback(nameof(VecScale))] public float vecScale = 0.001f;
 
     [SerializeField] private float arrowLambda = 18;
     //[SerializeField] private float layerGap = 0.003f;
@@ -27,6 +27,7 @@ public class VectorDiagram : UdonSharpBehaviour
     Vector2[] kStartPoints;
  //   [SerializeField]
     Vector2[] kEndPoints;
+    [SerializeField]
     Vector2[] kLinePoints;
     Vector2[] labelPoints;
     string[] beamAngles;
@@ -82,6 +83,7 @@ public class VectorDiagram : UdonSharpBehaviour
     private void kVectorDisplay(int demoMode)
     {
         arrowLength = arrowLambda / lambda;
+        float kPitch = slitPitch > 0 ? arrowLambda/slitPitch : 0;
         if (demoMode <= 0)
         {
             hideLabels();
@@ -101,6 +103,9 @@ public class VectorDiagram : UdonSharpBehaviour
 
         for (int i = 0; i < kVectors.Length; i++)
         {
+            float kDelta = kPitch * i;
+            kLinePoints[i] = new Vector2((kDelta <= halfHeight) ? 0 : -1, kDelta);
+
             kStartPoints[i] = Vector2.left;
             float thetaRadians;
             if (slitCount > 1)
@@ -142,8 +147,8 @@ public class VectorDiagram : UdonSharpBehaviour
                             endPoint.x = Mathf.Cos(thetaRadians) * arrowLength;
                             labelPoint.x = displayRect.x;
                             startPoint.x = 0;
-                            kStartPoints[i].x = 0;
                         }
+                        if (startPoint.y < halfHeight) kStartPoints[i].x = 0;
                         labelPoint.y = endPoint.y;
                         kStartPoints[i].y = startPoint.y;
                         kEndPoints[i] = endPoint;
@@ -266,14 +271,14 @@ public class VectorDiagram : UdonSharpBehaviour
                         kptr.Alpha = 0f;
                     break;
                 case 2: // Wave K-vector lines horizontal
-                        if ((i >= maxPoint) || (i == 0) || (kStartPoints[i].x < 0) || (kEndPoints[i].y > halfHeight))
+                        if ((i >= maxPoint) || (i == 0) || (kLinePoints[i].x < 0))
                             kptr.Alpha = 0;
                         else
                         {
                             kptr.Alpha = 1;
                             kptr.ShowTip = false;
                             kptr.LineLength = displayRect.x;
-                            kptr.transform.localPosition = new Vector3(0, labelPoints[i].y, 0); // + offset;
+                            kptr.transform.localPosition = kLinePoints[i]; // + offset;
                         }
                     break;
                 case 3: // Photon K-vector lines
