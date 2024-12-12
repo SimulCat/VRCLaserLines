@@ -84,6 +84,7 @@ public class VectorDiagram : UdonSharpBehaviour
     {
         arrowLength = arrowLambda / lambda;
         float kPitch = slitPitch > 0 ? arrowLambda/slitPitch : 0;
+        float ssPitch = slitWidth > 0 ? arrowLambda/(2*slitWidth) : 0;
         if (demoMode <= 0)
         {
             hideLabels();
@@ -103,7 +104,7 @@ public class VectorDiagram : UdonSharpBehaviour
 
         for (int i = 0; i < kVectors.Length; i++)
         {
-            float kDelta = kPitch * i;
+            float kDelta = slitCount > 1 ?  kPitch * i : i >= 1 ? ssPitch * (2*i + 1) : 0 ;
             kLinePoints[i] = new Vector2((kDelta <= halfHeight) ? 0 : -1, kDelta);
 
             kStartPoints[i] = Vector2.left;
@@ -145,22 +146,23 @@ public class VectorDiagram : UdonSharpBehaviour
                         if (endPoint.y <= halfHeight)
                         {
                             endPoint.x = Mathf.Cos(thetaRadians) * arrowLength;
-                            labelPoint.x = displayRect.x;
                             startPoint.x = 0;
                         }
                         if (startPoint.y < halfHeight) kStartPoints[i].x = 0;
                         labelPoint.y = endPoint.y;
+                        labelPoint.x = (labelPoint.y <= halfHeight) ? displayRect.x : -1;
                         kStartPoints[i].y = startPoint.y;
                         kEndPoints[i] = endPoint;
                         break;
                     case 3:
                         lineLength = arrowLength / 5f;
                         float deltay = sinTheta * lineLength;
-                        startPoint.y = sinTheta * (displayRect.x - lineLength);
+                        //startPoint.y = sinTheta * (displayRect.x - lineLength);
+                        startPoint.y = sinTheta * arrowLength;
                         Vector2 startDelta = new Vector2(cosTheta, sinTheta);
                         startDelta *= lineLength;
                         if (startPoint.y <= halfHeight - deltay)
-                            startPoint.x = displayRect.x - lineLength;
+                            startPoint.x = arrowLength*cosTheta;
                         else
                         {
                             startPoint.y = halfHeight - deltay;
@@ -222,28 +224,41 @@ public class VectorDiagram : UdonSharpBehaviour
                 UdonLabel lbl = vecLabels[i];
                 if (lbl != null)
                 {
-                    int posIdx = i;
                     string labelText;
                     //string mul = posIdx > 1 ? string.Format("{0}*",posIdx) : ""; 
                     switch (demoMode)
                     {
                         case 1:
-                            labelText = string.Format("θ<sub>{0}</sub>={1}", posIdx, beamAngles[posIdx ]);
+                            labelText = string.Format("θ<sub>{0}</sub>={1}", i, beamAngles[i]);
                             break;
                         case 2:
-                            labelText = string.Format("Δk<sub>{0}</sub>={0}/d", posIdx);
+                            if (slitCount <= 1)
+                            {
+                                labelText = string.Format("Δk<sub>{0}</sub>={1}/2w", i, i == 0 ? 0 : (2 * i + 1));
+                            }
+                            else
+                            {
+                                labelText = string.Format("Δk<sub>{0}</sub>={0}/d", i);
+                            }
                             break;
                         case 3:
-                            string mul = posIdx == 1 ? "h" : string.Format("{0}h", posIdx);
-                            labelText = string.Format("Δp<sub>{0}</sub>={1}/d", posIdx,mul);
+                            if (slitCount <= 1)
+                            {
+                                labelText = string.Format("Δp<sub>{0}</sub>={1}h/2w", i, i == 0 ? 0 : (2 * i + 1));
+                            }
+                            else
+                            {
+                                string mul = i == 1 ? "h" : string.Format("{0}h", i);
+                                labelText = string.Format("Δp<sub>{0}</sub>={1}/d", i, mul);
+                            }
                             break;
                         default:
                             labelText = "";
                             break;
                     }
-                    if (demoMode > 0 && labelPoints[posIdx].x > 0)
+                    if (demoMode > 0 && labelPoints[i].x > 0)
                     {
-                        lbl.LocalPostion = (Vector3)labelPoints[posIdx]; //+(layerOffset*0.5f);
+                        lbl.LocalPostion = (Vector3)labelPoints[i]; //+(layerOffset*0.5f);
                         lbl.Visible = true;
                         lbl.Text = labelText;
                     }
