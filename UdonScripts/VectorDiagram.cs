@@ -161,13 +161,13 @@ public class VectorDiagram : UdonSharpBehaviour
                         startPoint.y = sinTheta * arrowLength;
                         Vector2 startDelta = new Vector2(cosTheta, sinTheta);
                         startDelta *= lineLength;
-                        if (startPoint.y <= halfHeight)
+                        //if (startPoint.y <= halfHeight)
                             startPoint.x = arrowLength*cosTheta;
-                        else
-                        {
-                            startPoint.y = halfHeight;
-                            startPoint.x = startPoint.y / Mathf.Tan(thetaRadians); // halfHeightx = x * tan
-                        }
+                        //else
+                        //{
+                        //    startPoint.y = halfHeight;
+                        //    startPoint.x = startPoint.y / Mathf.Tan(thetaRadians); // halfHeightx = x * tan
+                        //}
                         endPoint = startPoint + startDelta;
                         labelPoint = endPoint;
                         kEndPoints[i] = endPoint;
