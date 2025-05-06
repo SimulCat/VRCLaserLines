@@ -109,7 +109,7 @@ MonoBehaviour:
   _udonSharpBackingUdonBehaviour: {fileID: 1280083889603926765}
   _lightSaberEffect: 0
   lineLength: 0.5
-  lineWidth: 0.03
+  lineWidth: 0.02
   _material: {fileID: 0}
   templateMaterial: {fileID: 0}
   thetaDegrees: 0
