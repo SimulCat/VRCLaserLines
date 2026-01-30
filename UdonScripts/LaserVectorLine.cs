@@ -54,7 +54,7 @@ public class LaserVectorLine : UdonSharpBehaviour
         }
     }
 
-    [SerializeField, Range(0f, 0.1f), FieldChangeCallback(nameof(LineWidth))]
+    [SerializeField, Range(0f, 0.25f), FieldChangeCallback(nameof(LineWidth))]
     private float lineWidth = 0.03f;
     public float LineWidth
     {
