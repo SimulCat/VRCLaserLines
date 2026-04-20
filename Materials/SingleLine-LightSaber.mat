@@ -67,9 +67,9 @@ Material:
     - _DstBlend: 0
     - _Glossiness: 0.5
     - _Intensity: 1
-    - _LightSaberFactor: 0.8
-    - _LineScale: 1.5000002
-    - _LineWidth: 0.0779
+    - _LightSaberFactor: 1
+    - _LineScale: 0.5000001
+    - _LineWidth: 0.2
     - _Metallic: 0
     - _Mode: 0
     - _OcclusionStrength: 1
