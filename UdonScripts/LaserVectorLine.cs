@@ -392,6 +392,7 @@ public class LaserVectorLine : UdonSharpBehaviour
 #if UNITY_EDITOR
     private void OnValidate()
         {
+        SetStartAndEndPoints();
         SetAllMaterialProperties(); 
         }
     #endif
