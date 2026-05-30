@@ -58,7 +58,7 @@ public class GiantLaser : UdonSharpBehaviour
     //private float ViewAngle;
     private bool beamChanged = true;
 
-    private void Awake()
+    private void OnEnable()
     {
         if (StartPoint == null)
         {
