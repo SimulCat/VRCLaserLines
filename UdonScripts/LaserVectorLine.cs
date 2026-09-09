@@ -68,7 +68,6 @@ public class LaserVectorLine : UdonSharpBehaviour
                 _material.SetFloat("_LineWidth", lineWidth);
             }
             UpdateBounds();
-            //UpdateShaft();
         }
     }
 
@@ -228,7 +227,7 @@ public class LaserVectorLine : UdonSharpBehaviour
     /// Updates the bounds of this line according to the current properties, 
     /// which there are: start point, end point, line width, scaling of the object.
     /// </summary>
-    public void UpdateBounds()
+    private void UpdateBounds()
     {
         if (_mesh != null)
         {
@@ -356,16 +355,16 @@ public class LaserVectorLine : UdonSharpBehaviour
     /// <summary>
     /// Calculates the (approximated) _LineScale factor based on the object's scale.
     /// </summary>
-    private float CalculateLineScale()
+    private float CalculateScale()
     {
         return Vector3.Dot(transform.lossyScale, Average);
     }
 
-    private void UpdateLineScale()
+    public void UpdateScale()
     {
         if (_material != null)
         {
-            _material.SetFloat("_LineScale", CalculateLineScale());
+            _material.SetFloat("_LineScale", CalculateScale());
         }
     }
 
@@ -381,8 +380,13 @@ public class LaserVectorLine : UdonSharpBehaviour
             _material.SetFloat("_LineWidth", lineWidth);
             if (_hasSaberEffect)
                 _material.SetFloat("_LightSaberFactor", _lightSaberEffect);
-            UpdateLineScale();
+            UpdateScale();
         }
+    }
+    public void refreshBeam()
+    {
+        SetStartAndEndPoints();
+        SetAllMaterialProperties();
     }
 
 
@@ -392,10 +396,33 @@ public class LaserVectorLine : UdonSharpBehaviour
 #if UNITY_EDITOR
     private void OnValidate()
         {
-        SetStartAndEndPoints();
-        SetAllMaterialProperties(); 
+        refreshBeam();
+    }
+    void OnDrawGizmos()
+    {
+        Gizmos.color = Color.green;
+
+        Gizmos.DrawLine(gameObject.transform.TransformPoint(Vector3.zero), gameObject.transform.TransformPoint(new Vector3(lineLength, 0, 0)));
+    }
+#endif
+
+    private float updateTimer = 1;
+    private bool started = false;
+    private void Update()
+    {
+        if (!started)
+            return;
+        updateTimer -= Time.deltaTime;
+        if (updateTimer > 0)
+            return;
+        updateTimer = 2;
+        if (transform.hasChanged)
+        {
+            transform.hasChanged = false;
+            UpdateScale();
         }
-    #endif
+    }
+
 
     private void Start()
     {
@@ -408,14 +435,7 @@ public class LaserVectorLine : UdonSharpBehaviour
         ThetaDegrees = thetaDegrees;
         SetStartAndEndPoints();
         SetAllMaterialProperties();
+        started = true;
     }
-
-    void OnDrawGizmos()
-    {
-        Gizmos.color = Color.green;
-
-        Gizmos.DrawLine(gameObject.transform.TransformPoint(Vector3.zero), gameObject.transform.TransformPoint(new Vector3(lineLength,0,0)));
-    }
-
     #endregion
 }
