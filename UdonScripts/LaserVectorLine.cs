@@ -423,8 +423,7 @@ public class LaserVectorLine : UdonSharpBehaviour
         }
     }
 
-
-    private void Start()
+    private void OnEnable()
     {
         _meshFilter = GetComponent<MeshFilter>();
         _mesh = new Mesh();
@@ -432,6 +431,9 @@ public class LaserVectorLine : UdonSharpBehaviour
         MeshRenderer mr = GetComponent<MeshRenderer>();
         mr.material = templateMaterial;
         _material = mr.material;
+    }
+    private void Start()
+    {
         ThetaDegrees = thetaDegrees;
         SetStartAndEndPoints();
         SetAllMaterialProperties();

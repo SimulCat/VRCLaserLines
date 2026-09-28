@@ -18,7 +18,6 @@ using VRC.Udon;
 
 public class UdonLineStrip : UdonSharpBehaviour
 {
-    private readonly Vector3 Average = new Vector3(1f / 3f, 1f / 3f, 1f / 3f);
     #region private variables
     /// <summary>
     /// Template material to be used
@@ -136,7 +135,17 @@ public class UdonLineStrip : UdonSharpBehaviour
     /// </summary>
     public Vector3[] LineVertices
     {
-        get { return _lineVertices; }
+        get {
+            return _lineVertices; 
+        }
+        set
+        {
+            if (value != null && value.Length >= 2)
+            {
+                _lineVertices = value;
+                BuildMeshFromVertices(_lineVertices);
+            }
+        }
     }
 
     #endregion
@@ -147,10 +156,6 @@ public class UdonLineStrip : UdonSharpBehaviour
     /// </summary>
     private bool UpdateBounds()
     {
-        var maxWidth = Mathf.Max(transform.lossyScale.x, transform.lossyScale.y, transform.lossyScale.z);
-        var scaledLineWidth = maxWidth * LineWidth * 0.5f;
-        var scaledLineWidthVec = new Vector3(scaledLineWidth, scaledLineWidth, scaledLineWidth);
-
         if (_mesh== null || _lineVertices== null || _lineVertices.Length == 0)
             return false;
 
