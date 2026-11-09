@@ -12,8 +12,6 @@ using VRC.Udon;
 public class LaserVectorLine : UdonSharpBehaviour
 {
     // Used to compute the average value of all the Vector3's components:
-    private readonly Vector3 Average = new Vector3(1f / 3f, 1f / 3f, 1f / 3f);
-
     #region udon parameters
     /// <summary>
     /// Light saber factor
@@ -90,6 +88,9 @@ public class LaserVectorLine : UdonSharpBehaviour
     #endregion
 
     #region properties
+    private readonly Vector3 Average = new Vector3(1f / 3f, 1f / 3f, 1f / 3f);
+    [SerializeField]
+    private bool showDebug = false;
 
     [SerializeField, FieldChangeCallback(nameof(ThetaDegrees))]
     private float thetaDegrees = 0;
@@ -423,8 +424,15 @@ public class LaserVectorLine : UdonSharpBehaviour
         }
     }
 
+    private bool _isEnabled = false;
+
     private void OnEnable()
     {
+        if (showDebug)
+            Debug.Log($"{gameObject.name}: OnEnable with Enabled: {_isEnabled}");
+        if (_isEnabled)
+            return;
+        _isEnabled = true;
         _meshFilter = GetComponent<MeshFilter>();
         _mesh = new Mesh();
         _meshFilter.mesh = _mesh;
@@ -434,6 +442,8 @@ public class LaserVectorLine : UdonSharpBehaviour
     }
     private void Start()
     {
+        if (showDebug)
+            Debug.Log($"{gameObject.name}: Start");
         ThetaDegrees = thetaDegrees;
         SetStartAndEndPoints();
         SetAllMaterialProperties();

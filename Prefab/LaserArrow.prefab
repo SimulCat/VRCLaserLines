@@ -98,7 +98,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   serializationData:
-    SerializedFormat: 0
+    SerializedFormat: 2
     SerializedBytes: 
     ReferencedUnityObjects: []
     SerializedBytesString: 
@@ -120,7 +120,7 @@ MonoBehaviour:
   showTip: 1
   tipLocation: 0
   isIncoming: 0
-  vertexCount: 0
+  vertexCount: 24
 --- !u!114 &1280083889603926765
 MonoBehaviour:
   m_ObjectHideFlags: 0
